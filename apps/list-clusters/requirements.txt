@@ -1,0 +1,6 @@
+databricks-sdk
+matplotlib
+numpy
+pandas
+requests
+flask

@@ -1,0 +1,35 @@
+name: Docker
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+    # Copy the release strategy from mifj
+    # copy the tagging strategy from JMP
+    # Together you can then also push to GHCR, ACR, 
+
+env:
+  IMAGE_NAME: matlab-on-databricks
+
+jobs:
+  build:
+    name: Build container image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Get tag
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+      - name: Log into registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_ENDPOINT }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      - name: Build & Push
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          build-args: |
+          tags: ${{ secrets.ACR_ENDPOINT }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
