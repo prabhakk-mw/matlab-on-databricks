@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Usage: ./start-matlab-proxy-as-user.sh -u prabhakk &
+
 # This script creates a new user with the specified name
 # and then starts matlab-proxy-app as that user
 
@@ -28,7 +30,7 @@ then
    helpFunction
 fi
 
-echo "Creating $newUser ..."
+echo "Updating the user "matlab" to: $newUser ..."
 usermod -l $newUser matlab 
 sed -i -e "s/matlab/$newUser/g" /etc/passwd
 mv /home/matlab /home/$newUser
