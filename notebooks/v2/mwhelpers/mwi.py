@@ -1,4 +1,4 @@
-def _get_databricks_context():
+def get_databricks_context():
     from dbruntime.databricks_repl_context import get_context
 
     return get_context()
@@ -23,9 +23,9 @@ def get_cluster_name():
         return cluster_name
 
 
-def get_url_to_matlab(session_id):
+def get_url_to_matlab(session_id, context):
 
-    context = _get_databricks_context()
+    # context = _get_databricks_context()
 
     if context.isInJob:
         print("Running inside a job, aborting...")
@@ -125,7 +125,7 @@ def get_running_matlab_proxy_servers(debug=False):
     if running_servers:
         return _parse_matlab_proxy_servers(running_servers, debug=debug)
     else:
-        return None
+        return ""
 
 
 def get_toolboxes_available_for_install():

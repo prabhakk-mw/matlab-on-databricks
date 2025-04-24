@@ -48,7 +48,7 @@ def stop_matlab_session(session_id):
     print(f"Stopping MATLAB session with ID: {session_id}")
 
 
-def get_url_to_matlab(session_id):
+def get_url_to_matlab(session_id, context):
     """Get the URL to a MATLAB session.
 
     Args:
