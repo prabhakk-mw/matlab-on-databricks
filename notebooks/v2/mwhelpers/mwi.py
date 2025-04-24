@@ -1,12 +1,60 @@
-def dPrint(msg: str):
+def _get_databricks_context():
+    from dbruntime.databricks_repl_context import get_context
+
+    return get_context()
+
+
+def get_user_name():
+    return _get_databricks_context().user
+
+
+def get_cluster_name():
+    from databricks.sdk import WorkspaceClient
+
+    context = _get_databricks_context()
+    if context.isInJob:
+        return "Job Cluster"
+    else:
+        cluster_name = (
+            WorkspaceClient(host=context.browserHostName, token=context.apiToken)
+            .clusters.get(context.clusterId)
+            .cluster_name
+        )
+        return cluster_name
+
+
+def get_url_to_matlab(session_id):
+
+    context = _get_databricks_context()
+
+    if context.isInJob:
+        print("Running inside a job, aborting...")
+        return None
+    else:
+
+        workspace_url = f"https://{context.browserHostName}"
+        workspace_id = context.workspaceId
+        cluster_id = context.clusterId
+
+        cluster_url = f"{workspace_url}/driver-proxy/o/{workspace_id}/{cluster_id}/"
+        template_url = cluster_url + "{{port}}/{{base_url}}/index.html"
+
+        assumed_base_url = "matlab"
+        url = template_url.replace("{{port}}", str(session_id)).replace(
+            "{{base_url}}", assumed_base_url
+        )
+        return url
+
+
+def _dPrint(msg: str):
     import inspect
 
     caller_info = inspect.stack()[1]
     print(f"{caller_info.function}@{caller_info.lineno}: {msg}")
 
 
-def get_matlab_proxy_install_location(debug=False):
-    printd = dPrint if debug else lambda x: None
+def _get_matlab_proxy_install_location(debug=False):
+    printd = _dPrint if debug else lambda x: None
 
     import subprocess
 
@@ -23,11 +71,10 @@ def get_matlab_proxy_install_location(debug=False):
             return matlab_proxy_install_location
     printd("No matlab-proxy install location found")
     return None
-    raise RuntimeError("No matlab-proxy install location found")
 
 
-def parse_matlab_proxy_servers(server_list, debug=False):
-    printd = dPrint if debug else lambda x: None
+def _parse_matlab_proxy_servers(server_list, debug=False):
+    printd = _dPrint if debug else lambda x: None
 
     parsed_servers = []
     default_server_address = "http://0.0.0.0:"
@@ -38,21 +85,23 @@ def parse_matlab_proxy_servers(server_list, debug=False):
                 port, base_url = server_info.split("/", 1)
             else:
                 port, base_url = server_info, ""
-            parsed_servers.append({"port": port, "base_url": base_url})
+            # parsed_servers.append({"port": port, "base_url": base_url})
+            parsed_servers.append(str(port))
     printd(parsed_servers)
 
     return parsed_servers
 
 
 def get_running_matlab_proxy_servers(debug=False):
-    printd = dPrint if debug else lambda x: None
+    """This function looks at the file system & not the process tree to find the running matlab-proxy servers."""
+    printd = _dPrint if debug else lambda x: None
 
     import glob
     import os
     import sys
 
     # Add the path to the site_package for matlab-proxy in the container
-    matlab_proxy_install_location = get_matlab_proxy_install_location(debug=debug)
+    matlab_proxy_install_location = _get_matlab_proxy_install_location(debug=debug)
     sys.path.append(matlab_proxy_install_location)
 
     import matlab_proxy.settings as mwi_settings
@@ -74,19 +123,9 @@ def get_running_matlab_proxy_servers(debug=False):
 
     # return running_servers
     if running_servers:
-        return parse_matlab_proxy_servers(running_servers, debug=debug)
+        return _parse_matlab_proxy_servers(running_servers, debug=debug)
     else:
         return None
-
-
-def hello():
-    """Prints hello"""
-    # Print hello
-    return [
-        "MATLAB",
-        "Simulink",
-        "MATLAB Coder",
-    ]
 
 
 def get_toolboxes_available_for_install():
@@ -106,53 +145,62 @@ def get_installed_toolboxes():
     ]
 
 
-# from databricks.sdk import WorkspaceClient
-# from dbruntime.databricks_repl_context import get_context
+def start_matlab_session(
+    configure_psp=False,
+    toolboxes_to_install=None,
+    debug=False,
+):
+    """Start a MATLAB session.
 
-# running_servers = get_running_matlab_proxy_servers(debug=False)
+    Args:
+        configure_psp (bool): Whether to configure the MATLAB Proxy Server.
+        toolboxes_to_install (list): List of toolboxes to install.
+        debug (bool): Whether to enable debug mode.
 
-# context = get_context()
-# cluster_id = context.clusterId
-# user_name = context.user
+    Returns:
+        str: The ID of the started MATLAB session.
+    """
+    import os
+    import subprocess
 
-# if context.isInJob:
-#     if running_servers:
-#         for server in running_servers:
-#             print(server)
-#         dbutils.notebook.exit(str(running_servers))
-#     else:
-#         exit_msg="No matlab-proxy servers found. Please start the matlab_proxy first."
-#         print(exit_msg)
-#         dbutils.notebook.exit(exit_msg)
-# else:
-#     cluster_name = WorkspaceClient(host=context.browserHostName, token=context.apiToken).clusters.get(context.clusterId).cluster_name
+    print("Starting MATLAB session...")
 
-#     workspace_url = f"https://{context.browserHostName}"
-#     workspace_id = context.workspaceId
+    port = _find_next_open_port()
 
-#     cluster_url = f"{workspace_url}/driver-proxy/o/{workspace_id}/{cluster_id}/"
-#     template_url = cluster_url + "{{port}}/{{base_url}}/index.html"
+    my_env = os.environ
+    my_env["MWI_APP_PORT"] = str(port)
+
+    start_msg = f"Starting matlab-proxy-app on port {str(port)}"
+    print(start_msg)
+    r = subprocess.Popen(["matlab-proxy-app"], env=my_env)
+    print("Started matlab-proxy-app")
+
+    return str(port)
 
 
-#     if running_servers is None:
-#         from IPython.display import display, HTML
-#         display(HTML("<h3 style='color:red;'>No matlab-proxy servers found. Please start the matlab_proxy first.</h3>"))
-#     else:
-#         urls = []
-#         for server in running_servers:
-#             url = template_url
-#             for key, value in server.items():
-#                 url = url.replace(f"{{{{{key}}}}}", value)
-#             urls.append(str(url).rstrip())
+def find_matlab_proxy_app_processes():
+    """Find all running MATLAB Proxy App processes."""
+    import psutil
 
-#         from IPython.display import display, HTML
+    processes = []
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        for process in proc.info["cmdline"]:
+            if "matlab-proxy-app" in process:
+                processes.append(proc.info)
+    return processes
 
-#         if urls:
-#             html_content = f"<h3 style='color:blue;'>Found the {len(urls)} matlab_proxy server(s) running on cluster: <style='color:red;'>'{cluster_name}'</h3>"
-#             html_content += f"<h2 style='color:green;'>Click on the link to access MATLAB:</h2><ul>"
-#             for server_number, (url, server) in enumerate(zip(urls, running_servers), start=1):
-#                 html_content += f"<h3><li><a href='{url}' target='_blank'>{server_number}. MATLAB running on Port {server['port']}</a></h3></li>"
-#             html_content += "</ul>"
-#             display(HTML(html_content))
-#         else:
-#             display(HTML("<h3 style='color:red;'>No matlab-proxy servers found. Please start the matlab_proxy first.</h3>"))
+
+def _find_next_open_port(
+    *, host="0.0.0.0", start_port: int = 3000, end_port: int = 9999
+):
+    import socket
+
+    for port in range(start_port, end_port + 1):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)  # Set a timeout for the connection attempt
+        result = sock.connect_ex((host, port))
+        if result != 0:  # 0 means the port is open
+            sock.close()
+            return port
+
+    return None

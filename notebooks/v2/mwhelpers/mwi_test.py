@@ -1,8 +1,15 @@
 import random
+from time import sleep
 
 # This file list all the APIs and functions that are used by the Notebooks
-#   and provides mock implementations which can be used for testing outside of a 
+#   and provides mock implementations which can be used for testing outside of a
 #   Databricks environment.
+
+def get_user_name():
+    return "Test User"
+
+def get_cluster_name():
+    return "Test Cluster"
 
 
 def get_toolboxes_available_for_install():
@@ -12,6 +19,7 @@ def get_toolboxes_available_for_install():
     """
     # This is a mock implementation.
     return ["Symbolic Math", "Deep Learning"]
+
 
 def get_installed_toolboxes():
     """Get the list of installed toolboxes in MATLAB.
@@ -29,6 +37,7 @@ def get_installed_toolboxes():
 def get_running_matlab_proxy_servers(debug=False):
     return [str(random.randint(3000, 9999)) for _ in range(3)]
 
+
 def stop_matlab_session(session_id):
     """Stop a MATLAB session.
 
@@ -37,6 +46,7 @@ def stop_matlab_session(session_id):
     """
     # This is a mock implementation.
     print(f"Stopping MATLAB session with ID: {session_id}")
+
 
 def get_url_to_matlab(session_id):
     """Get the URL to a MATLAB session.
@@ -50,6 +60,7 @@ def get_url_to_matlab(session_id):
     # This is a mock implementation.
     return "https://google.com"
     # return f"http://localhost:8000/matlab/{session_id}"
+
 
 def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=False):
     """Start a MATLAB session.
@@ -69,5 +80,6 @@ def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=F
         print(f"Installing toolboxes: {toolboxes_to_install}")
 
     print("Starting MATLAB session...")
+    sleep(2)
     # This is a mock implementation.
     return str(random.randint(1000, 9999))
