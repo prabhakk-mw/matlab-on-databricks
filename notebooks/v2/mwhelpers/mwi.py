@@ -5,13 +5,13 @@ def get_databricks_context():
 
 
 def get_user_name():
-    return _get_databricks_context().user
+    return get_databricks_context().user
 
 
 def get_cluster_name():
     from databricks.sdk import WorkspaceClient
 
-    context = _get_databricks_context()
+    context = get_databricks_context()
     if context.isInJob:
         return "Job Cluster"
     else:
@@ -24,8 +24,6 @@ def get_cluster_name():
 
 
 def get_url_to_matlab(session_id, context):
-
-    # context = _get_databricks_context()
 
     if context.isInJob:
         print("Running inside a job, aborting...")

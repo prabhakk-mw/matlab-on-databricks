@@ -83,3 +83,17 @@ def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=F
     sleep(2)
     # This is a mock implementation.
     return str(random.randint(1000, 9999))
+
+
+def get_databricks_context():
+    """Get the Databricks context.
+
+    Returns:
+        dict: The Databricks context.
+    """
+    # This is a mock implementation.
+    return {
+        "cluster_id": "1234",
+        "notebook_id": "5678",
+        "workspace_url": "https://databricks.com",
+    }
