@@ -176,7 +176,7 @@ def get_matlab_version():
     Returns:
         str: The version of MATLAB.
     """
-    return _call_ListInstalledProducts_script().splitlines()[4]
+    return _call_ListInstalledProducts_script().splitlines()[4].split(":")[1].strip()
 
 
 def get_installed_toolboxes():
