@@ -143,6 +143,38 @@ def get_installed_toolboxes():
     ]
 
 
+def find_process_using_port(port):
+    """Find the process using a specific port.
+    Args:
+        port (int): The port number to check.
+    Returns:
+        tuple: A tuple containing the process ID and name if found, else None.
+    """
+    import psutil
+
+    for proc in psutil.process_iter(["pid", "name", "connections"]):
+        for conn in proc.info["connections"]:
+            if conn.laddr.port == port:
+                print(f"Found process!{proc.info['name']}")
+                return proc.info["pid"], proc.info["name"]
+    return None
+
+
+def stop_matlab_session(session_id):
+    import os
+    import signal
+
+    process_info = find_process_using_port(int(session_id))
+    if process_info:
+        pid, pname = process_info
+        if "matlab-proxy" in pname:
+            print(f"Stopping MATLAB session with ID: {session_id}")
+            # Terminate the process
+            os.kill(pid, signal.SIGTERM)
+    else:
+        print(f"No MATLAB session found with ID: {session_id}")
+
+
 def start_matlab_session(
     configure_psp=False,
     toolboxes_to_install=None,
