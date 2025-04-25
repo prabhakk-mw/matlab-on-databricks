@@ -130,12 +130,37 @@ def get_toolboxes_available_for_install():
     return ["Symbolic Math", "Deep Learning"]
 
 
+def get_matlab_root():
+    """Get the root directory of MATLAB.
+
+    Returns:
+        str: The root directory of MATLAB.
+    """
+    # return _call_ListInstalledProducts_script().splitlines()[2].split(":")[1].strip()
+    import subprocess
+
+    result = subprocess.run(["which", "matlab"], capture_output=True, text=True)
+    matlab_path = result.stdout.strip()
+
+    resolved_path = subprocess.run(
+        ["readlink", "-f", matlab_path], capture_output=True, text=True
+    ).stdout.strip()
+    if resolved_path.endswith("/bin/matlab"):
+        resolved_path = resolved_path.replace("/bin/matlab", "")
+
+    return resolved_path
+
+
 def _call_ListInstalledProducts_script():
     if not hasattr(_call_ListInstalledProducts_script, "_cached_output"):
         import subprocess
 
         result = subprocess.run(
-            ["../../../helper-scripts/ListInstalledProducts.sh"],
+            [
+                "../../../helper-scripts/ListInstalledProducts.sh",
+                "-r",
+                get_matlab_root(),
+            ],
             capture_output=True,
             text=True,
         )
@@ -144,14 +169,6 @@ def _call_ListInstalledProducts_script():
 
     return _call_ListInstalledProducts_script._cached_output
 
-
-def get_matlab_root():
-    """Get the root directory of MATLAB.
-
-    Returns:
-        str: The root directory of MATLAB.
-    """
-    return _call_ListInstalledProducts_script().splitlines()[2].split(":")[1].strip()
 
 def get_matlab_version():
     """Get the version of MATLAB.
