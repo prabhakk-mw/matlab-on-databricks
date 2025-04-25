@@ -127,7 +127,7 @@ def get_running_matlab_proxy_servers(debug=False):
 
 
 def get_toolboxes_available_for_install():
-    return ["Symbolic Math", "Deep Learning"]
+    return ["Symbolic Math", "Deep Learning", "This FEATURE IS NOT YET IMPLEMENTED"]
 
 
 def get_matlab_root():
