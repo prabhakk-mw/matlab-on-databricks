@@ -130,17 +130,47 @@ def get_toolboxes_available_for_install():
     return ["Symbolic Math", "Deep Learning"]
 
 
+def _call_ListInstalledProducts_script():
+    if not hasattr(_call_ListInstalledProducts_script, "_cached_output"):
+        import subprocess
+
+        result = subprocess.run(
+            ["../../../helper-scripts/ListInstalledProducts.sh"],
+            capture_output=True,
+            text=True,
+        )
+        script_output = result.stdout
+        _call_ListInstalledProducts_script._cached_output = script_output
+
+    return _call_ListInstalledProducts_script._cached_output
+
+
+def get_matlab_root():
+    """Get the root directory of MATLAB.
+
+    Returns:
+        str: The root directory of MATLAB.
+    """
+    return _call_ListInstalledProducts_script().splitlines()[2].split(":")[1].strip()
+
+def get_matlab_version():
+    """Get the version of MATLAB.
+
+    Returns:
+        str: The version of MATLAB.
+    """
+    return _call_ListInstalledProducts_script().splitlines()[4]
+
+
 def get_installed_toolboxes():
     """Get the list of installed toolboxes in MATLAB.
 
     Returns:
         list: List of installed toolboxes.
     """
-    return [
-        "MATLAB",
-        "Simulink",
-        "MATLAB Coder",
-    ]
+
+    installed_products = _call_ListInstalledProducts_script()
+    return installed_products.splitlines()[7:]
 
 
 def find_process_using_port(port):

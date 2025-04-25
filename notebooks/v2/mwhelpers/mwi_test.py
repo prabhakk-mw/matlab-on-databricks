@@ -5,8 +5,10 @@ from time import sleep
 #   and provides mock implementations which can be used for testing outside of a
 #   Databricks environment.
 
+
 def get_user_name():
     return "Test User"
+
 
 def get_cluster_name():
     return "Test Cluster"
@@ -19,6 +21,14 @@ def get_toolboxes_available_for_install():
     """
     # This is a mock implementation.
     return ["Symbolic Math", "Deep Learning"]
+
+
+def get_matlab_root():
+    return "/opt/matlab/R2023a"
+
+
+def get_matlab_version():
+    return "R2023a"
 
 
 def get_installed_toolboxes():
