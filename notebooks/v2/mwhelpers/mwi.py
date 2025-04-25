@@ -155,7 +155,6 @@ def find_process_using_port(port):
     for proc in psutil.process_iter(["pid", "name", "connections"]):
         for conn in proc.info["connections"]:
             if conn.laddr.port == port:
-                print(f"Found process!{proc.info['name']}")
                 return proc.info["pid"], proc.info["name"]
     return None
 
@@ -202,7 +201,7 @@ def start_matlab_session(
 
     start_msg = f"Starting matlab-proxy-app on port {str(port)}"
     print(start_msg)
-    r = subprocess.Popen(["matlab-proxy-app"], env=my_env)
+    r = subprocess.Popen(["matlab-proxy-app"], env=my_env, close_fds=True)
     print("Started matlab-proxy-app")
 
     return str(port)
