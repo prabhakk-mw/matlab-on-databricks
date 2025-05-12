@@ -35,9 +35,6 @@
 #   MATLAB documentation for the function `VER`.
 ##
 
-# Default MATLAB root directory (update this path as needed)
-MATLAB_ROOT="/opt/matlab/R2024b"
-
 # Function to display help information
 print_help() {
     echo "Usage: $0 [OPTIONS]"
@@ -48,6 +45,7 @@ print_help() {
     echo "Options:"
     echo "  -r, --root <path>   Specify the MATLAB root directory to search."
     echo "  -h                  Display this help message and exit."
+    echo "  -v                  Enable verbose output."
     echo ""
     echo "Example:"
     echo "  $0 --root /path/to/matlab"
@@ -59,7 +57,12 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -r|--root)
             MATLAB_ROOT="$2"
+            EXPLICIT_MATLAB_ROOT_PROVIDED=1
             shift 2
+            ;;
+        -v)
+            VERBOSE_OUTPUT=1
+            shift 1
             ;;
         -h)
             print_help
@@ -70,6 +73,36 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Helper function to check if verbose output is enabled
+is_verbose_enabled() {
+    [[ "${VERBOSE_OUTPUT:-0}" -eq 1 ]]
+}
+
+# If explicity provided MATLAB root is not set, use the default
+if [ -z "${EXPLICIT_MATLAB_ROOT_PROVIDED+x}" ] || [ "$EXPLICIT_MATLAB_ROOT_PROVIDED" -ne "1" ]; then
+    # If search path is not provided, use MATLAB from the system PATH if available.
+    MATLAB_ON_PATH=$(which matlab)
+    # Call READLINK if MATLAB_ON_PATH is not empty
+    if [ -n "$MATLAB_ON_PATH" ]; then
+        # Check if the MATLAB executable is on the PATH
+        MATLAB_ROOT=$(readlink -f "$MATLAB_ON_PATH" | xargs dirname | xargs dirname)
+    else
+        # If not found, exit with an error message
+        echo "Error: MATLAB not found on PATH. Either add MATLAB to the PATH or provide it using the -r flag."
+        print_help
+        exit 1
+    fi
+    if is_verbose_enabled; then
+        echo "MATLAB found on PATH: $MATLAB_ROOT"
+    fi
+fi
+
+# Check if MATLAB_ROOT is empty
+if [ -z "$MATLAB_ROOT" ]; then
+    echo "Error: MATLAB_ROOT is not set or is empty."
+    exit 1
+fi
 
 # Check if MATLAB_ROOT exists
 if [ ! -d "$MATLAB_ROOT" ]; then
@@ -131,11 +164,13 @@ num_results=$(echo "$results" | wc -l)
 
 # Print the summary
 echo "----------------------"
-echo "Summary:"
-echo "Root location searched: $MATLAB_ROOT"
-echo "Number of results found: $num_results"
+if is_verbose_enabled; then
+    echo "Summary:"
+    echo "Number of Installed Products: $num_results"
+    echo "Search Time: ${elapsed_time} seconds"
+fi
+echo "MATLAB Root: $MATLAB_ROOT"
 echo "MATLAB Version: $matlab_version"
-echo "Total time taken: ${elapsed_time} seconds"
 echo "----------------------"
 
 # Print the unique results
