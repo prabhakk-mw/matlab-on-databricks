@@ -163,7 +163,7 @@ def _call_ListInstalledProducts_script():
 
         result = subprocess.run(
             [
-                "../../helper-scripts/ListInstalledProducts.sh",
+                "./mwhelpers/scripts/ListInstalledProducts.sh",
                 "-r",
                 get_matlab_root(),
             ],
