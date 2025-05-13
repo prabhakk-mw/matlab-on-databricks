@@ -5,7 +5,13 @@ def get_databricks_context():
 
 
 def get_user_name():
-    return get_databricks_context().user
+    # If username contains and email address, remove the domain part
+    # and return only the username
+    # Example: "prabhakk@mw.com" -> "prabhakk"
+    username = get_databricks_context().user
+    if "@" in username:
+        username = username.split("@")[0]
+    return username
 
 
 def get_cluster_name():
