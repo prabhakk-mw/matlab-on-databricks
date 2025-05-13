@@ -158,20 +158,26 @@ def get_matlab_root():
 
 
 def _call_ListInstalledProducts_script():
-    if not hasattr(_call_ListInstalledProducts_script, "_cached_output"):
-        import subprocess
+    import subprocess
+    import os
+    script_path = os.path.join(
+        os.path.dirname(__file__), "scripts", "ListInstalledProducts.sh"
+    )
+    result = subprocess.run(
+        [
+            script_path,
+            "-r",
+            get_matlab_root(),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    script_output = result.stdout
+    return script_output
 
-        result = subprocess.run(
-            [
-                "./mwhelpers/scripts/ListInstalledProducts.sh",
-                "-r",
-                get_matlab_root(),
-            ],
-            capture_output=True,
-            text=True,
-        )
-        script_output = result.stdout
-        _call_ListInstalledProducts_script._cached_output = script_output
+def _call_ListInstalledProducts_script_cached():
+    if not hasattr(_call_ListInstalledProducts_script, "_cached_output"):        
+        _call_ListInstalledProducts_script._cached_output = _call_ListInstalledProducts_script()
 
     return _call_ListInstalledProducts_script._cached_output
 
@@ -182,7 +188,7 @@ def get_matlab_version():
     Returns:
         str: The version of MATLAB.
     """
-    return _call_ListInstalledProducts_script().splitlines()[4].split(":")[1].strip()
+    return _call_ListInstalledProducts_script_cached().splitlines()[2].split(":")[1].strip()
 
 
 def get_installed_toolboxes():
@@ -192,8 +198,8 @@ def get_installed_toolboxes():
         list: List of installed toolboxes.
     """
 
-    installed_products = _call_ListInstalledProducts_script()
-    return installed_products.splitlines()[7:]
+    installed_products = _call_ListInstalledProducts_script_cached()
+    return installed_products.splitlines()[4:]
 
 
 def find_process_using_port(port):
