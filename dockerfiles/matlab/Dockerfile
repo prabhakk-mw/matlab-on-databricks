@@ -28,10 +28,13 @@
 #              --build-arg LICENSE_SERVER=12345@hostname.com
 #              -t my_matlab_image_name .
 
+
 # Specify the Databricks Runtime version to use as the base image.
 ARG DATABRICKS_IMAGE_TAG=16.4-LTS
 # Specify the version of Ubuntu used in the base image.
 ARG UBUNTU_VERSION=24.04
+# Use the python that is recommended by Databricks: https://docs.databricks.com/aws/en/compute/custom-containers#option-1-use-a-base-built-by-databricks
+ARG PYTHON3=/databricks/python3/bin/python3
 # Specify the MATLAB release to install.
 ARG MATLAB_RELEASE=R2025a
 # Specify the list of products(toolboxes) to install into MATLAB.
@@ -49,16 +52,19 @@ ARG NLM=${LICENSE_SERVER:+"-with-nlm"}
 
 FROM databricksruntime/standard:${DATABRICKS_IMAGE_TAG} AS base
 ARG UBUNTU_VERSION
-ARG MATLAB_RELEASE=R2025a
-ARG MATLAB_PRODUCT_LIST
+ARG PYTHON3
+ARG MATLAB_RELEASE
 ARG MATLAB_INSTALL_LOCATION
+ARG MATLAB_PRODUCT_LIST
 
 USER root
+
+RUN [ -d /usr/share/X11/xkb ] || mkdir -p /usr/share/X11/xkb
 
 ARG MATLAB_DEPS_URL="https://raw.githubusercontent.com/mathworks-ref-arch/container-images/main/matlab-deps/${MATLAB_RELEASE}/ubuntu${UBUNTU_VERSION}/base-dependencies.txt"
 ARG MATLAB_DEPENDENCIES="matlab-deps-${MATLAB_RELEASE}-base-dependencies.txt"
 # gettext is required for the administer-mathworks-service-host/admin-scripts/linux/admin-controlled-installation/install.sh script to run
-ARG ADDITIONAL_PACKAGES="wget curl unzip ca-certificates xvfb git python3 python3-pip vim gettext fluxbox"
+ARG ADDITIONAL_PACKAGES="wget curl unzip ca-certificates xvfb git vim gettext fluxbox"
 
 # Configure Python 3.12 to allow installing system wide packages. 
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
@@ -109,7 +115,7 @@ ENV MWI_BASE_URL="/matlab"
 ENV MWI_ENABLE_TOKEN_AUTH=False
 EXPOSE 8888
 
-RUN python3 -m pip install --no-cache-dir aiohttp==3.10.5 matlab-proxy jupyter-matlab-proxy
+RUN ${PYTHON3} -m pip install --no-cache-dir aiohttp==3.10.5 matlab-proxy jupyter-matlab-proxy
 
 ###################################
 # Install MATLAB Engine for Python
@@ -120,11 +126,8 @@ RUN python3 -m pip install --no-cache-dir aiohttp==3.10.5 matlab-proxy jupyter-m
 ####################################
 RUN echo "Installing MATLAB Engine for Python..." && \
     MATLAB_VERSION=$(cat ${MATLAB_INSTALL_LOCATION}/VersionInfo.xml | grep -oP '(\d{2}\.\d{1})') && \
-    env LD_LIBRARY_PATH=${MATLAB_INSTALL_LOCATION}/bin/glnxa64 python3 -m pip install --no-cache-dir matlabengine==${MATLAB_VERSION}.* || \
+    env LD_LIBRARY_PATH=${MATLAB_INSTALL_LOCATION}/bin/glnxa64 ${PYTHON3} -m pip install --no-cache-dir matlabengine==${MATLAB_VERSION}.* || \
     echo "Failed to install MATLAB Engine for Python... skipping ..."
-
-# USER root
-RUN [ -d /usr/share/X11/xkb ] || mkdir -p /usr/share/X11/xkb
 
 # This variable ensures that MATLAB starts in the USERPATH folder if it is present.
 ENV MATLAB_USE_USERWORK=1
@@ -146,4 +149,4 @@ ENV MLM_LICENSE_FILE=${LICENSE_SERVER}
 #################################################################################################
 FROM base${NLM} AS final
 # Entrypoint is ignored in Databricks, but can be used for local testing.
-ENTRYPOINT [ "matlab-proxy-app" ]
+ENTRYPOINT ["/bin/sh", "-c", ". /databricks/python3/bin/activate && matlab-proxy-app" ]
