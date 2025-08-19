@@ -165,12 +165,12 @@ def get_running_matlab_proxy_servers(username, debug=False, only_ports=True):
     import socket
 
     if username is None:
-        return ""
+        return []
 
     home_folder = _get_home_folder(username)
     if not home_folder:
         #  User does not exist, this function does not create the user.
-        return ""
+        return []
 
     hostname = socket.gethostname()
     ports_folder = home_folder + "/.matlab/MWI/hosts/" + hostname + "/ports"
@@ -191,7 +191,7 @@ def get_running_matlab_proxy_servers(username, debug=False, only_ports=True):
         server_dict = _parse_matlab_proxy_servers(running_servers, debug=debug)
         return list(server_dict.keys()) if only_ports else server_dict
     else:
-        return ""
+        return []
 
 
 # [Unused version]
@@ -254,8 +254,8 @@ def start_matlab_session(
         # Create the user if it does not exist
         uid = _create_user(username)
         print(f"User {username} created with UID: {uid}")
+        home_folder = _get_home_folder(username)
 
-    home_folder = _get_home_folder(username)
     if not home_folder:
         print("Unable to home folder, aborting...")
         return ""
