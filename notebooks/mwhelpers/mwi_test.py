@@ -6,31 +6,56 @@ from time import sleep
 #   Databricks environment.
 
 
-def get_user_name():
-    return "Test User"
+### List of APIs used in the Notebooks ###
+
+## Databricks Related
+# get_cluster_name()
+# get_databricks_context()
+# get_user_name(),
+
+## MATLAB Installation Related
+# get_installed_toolboxes()
+# get_matlab_root(),
+# get_matlab_version(),
+# get_toolboxes_available_for_install(),
+
+## MATLAB Proxy Related
+# get_running_matlab_proxy_servers(username=get_username())
+# get_url_to_matlab(session_id, context)
+# start_matlab_session(configure_psp, toolboxes_to_install, username=get_username())
+# stop_matlab_session(session, context)
+
+
+################################################
+## Databricks Related APIs
+################################################
 
 
 def get_cluster_name():
     return "Test Cluster"
 
 
-def get_toolboxes_available_for_install():
-    """Get the list of toolboxes available for installation in MATLAB.
+def get_databricks_context():
+    """Get the Databricks context.
+
     Returns:
-        list: List of toolboxes available for installation.
+        dict: The Databricks context.
     """
     # This is a mock implementation.
-    return ["Symbolic Math", "Deep Learning"]
+    return {
+        "cluster_id": "1234",
+        "notebook_id": "5678",
+        "workspace_url": "https://databricks.com",
+    }
 
 
-def get_matlab_root():
-    return "/opt/matlab/R2023a"
+def get_user_name():
+    return "TestUserName"
 
 
-def get_matlab_version():
-    return "R2023a"
-
-
+################################################
+## MATLAB Installation Related
+################################################
 def get_installed_toolboxes():
     """Get the list of installed toolboxes in MATLAB.
 
@@ -44,18 +69,30 @@ def get_installed_toolboxes():
     ]
 
 
-def get_running_matlab_proxy_servers(debug=False):
-    return [str(random.randint(3000, 9999)) for _ in range(3)]
+def get_matlab_root():
+    return "/opt/matlab/R2023a"
 
 
-def stop_matlab_session(session_id):
-    """Stop a MATLAB session.
+def get_matlab_version():
+    return "R2023a"
 
-    Args:
-        session_id (str): The ID of the session to stop.
+
+def get_toolboxes_available_for_install():
+    """Get the list of toolboxes available for installation in MATLAB.
+    Returns:
+        list: List of toolboxes available for installation.
     """
     # This is a mock implementation.
-    print(f"Stopping MATLAB session with ID: {session_id}")
+    return ["Symbolic Math", "Deep Learning"]
+
+
+################################################
+## MATLAB Proxy Related
+################################################
+
+
+def get_running_matlab_proxy_servers(debug=False):
+    return [str(random.randint(3000, 9999)) for _ in range(3)]
 
 
 def get_url_to_matlab(session_id, context):
@@ -95,15 +132,11 @@ def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=F
     return str(random.randint(1000, 9999))
 
 
-def get_databricks_context():
-    """Get the Databricks context.
+def stop_matlab_session(session_id):
+    """Stop a MATLAB session.
 
-    Returns:
-        dict: The Databricks context.
+    Args:
+        session_id (str): The ID of the session to stop.
     """
     # This is a mock implementation.
-    return {
-        "cluster_id": "1234",
-        "notebook_id": "5678",
-        "workspace_url": "https://databricks.com",
-    }
+    print(f"Stopping MATLAB session with ID: {session_id}")

@@ -1,3 +1,41 @@
+### List of APIs used in the Notebooks ###
+
+## Databricks Related
+# get_cluster_name()
+# get_databricks_context()
+# get_user_name(),
+
+## MATLAB Installation Related
+# get_installed_toolboxes()
+# get_matlab_root(),
+# get_matlab_version(),
+# get_toolboxes_available_for_install(),
+
+## MATLAB Proxy Related
+# get_running_matlab_proxy_servers(username=get_username())
+# get_url_to_matlab(session_id, context)
+# start_matlab_session(configure_psp, toolboxes_to_install, username=get_username())
+# stop_matlab_session(session, context)
+
+
+################################################
+## Databricks Related APIs
+################################################
+def get_cluster_name():
+    from databricks.sdk import WorkspaceClient
+
+    context = get_databricks_context()
+    if context.isInJob:
+        return "Job Cluster"
+    else:
+        cluster_name = (
+            WorkspaceClient(host=context.browserHostName, token=context.apiToken)
+            .clusters.get(context.clusterId)
+            .cluster_name
+        )
+        return cluster_name
+
+
 def get_databricks_context():
     from dbruntime.databricks_repl_context import get_context
 
@@ -14,19 +52,126 @@ def get_user_name():
     return username
 
 
-def get_cluster_name():
-    from databricks.sdk import WorkspaceClient
+################################################
+## MATLAB Installation Related
+################################################
 
-    context = get_databricks_context()
-    if context.isInJob:
-        return "Job Cluster"
-    else:
-        cluster_name = (
-            WorkspaceClient(host=context.browserHostName, token=context.apiToken)
-            .clusters.get(context.clusterId)
-            .cluster_name
+
+def get_installed_toolboxes():
+    """Get the list of installed toolboxes in MATLAB.
+
+    Returns:
+        list: List of installed toolboxes.
+    """
+
+    installed_products = _call_ListInstalledProducts_script_cached()
+    return installed_products.splitlines()[4:]
+
+
+def get_matlab_root():
+    """Get the root directory of MATLAB.
+
+    Returns:
+        str: The root directory of MATLAB.
+    """
+    import subprocess
+
+    result = subprocess.run(["which", "matlab"], capture_output=True, text=True)
+    matlab_path = result.stdout.strip()
+
+    resolved_path = subprocess.run(
+        ["readlink", "-f", matlab_path], capture_output=True, text=True
+    ).stdout.strip()
+    if resolved_path.endswith("/bin/matlab"):
+        resolved_path = resolved_path.replace("/bin/matlab", "")
+
+    return resolved_path
+
+
+def get_matlab_version():
+    """Get the version of MATLAB.
+
+    Returns:
+        str: The version of MATLAB.
+    """
+    return (
+        _call_ListInstalledProducts_script_cached()
+        .splitlines()[2]
+        .split(":")[1]
+        .strip()
+    )
+
+
+def get_toolboxes_available_for_install():
+    return ["Symbolic Math", "Deep Learning", "This FEATURE IS NOT YET IMPLEMENTED"]
+
+
+################################################
+## MATLAB Proxy Related
+################################################
+
+
+def get_running_matlab_proxy_servers(username=None, debug=False, only_ports=True):
+    """This function looks at the file system & not the process tree to find the running matlab-proxy servers."""
+    printd = _dPrint if debug else lambda x: None
+
+    import glob
+    import os
+    import sys
+    import socket
+    import subprocess
+
+    if username is not None:
+        hostname = socket.gethostname()
+        getent_result = subprocess.run(
+            ["getent", "passwd", username], capture_output=True, text=True
         )
-        return cluster_name
+        home_folder = (
+            getent_result.stdout.strip().split(":")[5]
+            + "/.matlab/MWI/hosts/"
+            + hostname
+        )
+        ports_folder = home_folder + "/ports"
+    else:
+        # Add the path to the site_package for matlab-proxy in the container
+        matlab_proxy_install_location = _get_matlab_proxy_install_location(debug=debug)
+        sys.path.append(matlab_proxy_install_location)
+
+        import matlab_proxy.settings as mwi_settings
+
+        # Find the running servers
+        home_folder = mwi_settings.get_mwi_config_folder()
+        ports_folder = home_folder / "ports"
+
+    # Look for files in port folders
+    search_string = str(ports_folder) + "/**/mwi_server.info"
+
+    search_results = sorted(glob.glob(search_string), key=os.path.getmtime)
+    running_servers = []
+    for server in search_results:
+        with open(server) as f:
+            server_info = f.read()
+            printd(str(server_info))
+            running_servers.append(str(server_info).rstrip())
+
+    # return running_servers
+    if running_servers:
+        server_dict = _parse_matlab_proxy_servers(running_servers, debug=debug)
+        return list(server_dict.keys()) if only_ports else server_dict
+    else:
+        return ""
+
+
+# [Unused version]
+def get_running_matlab_proxy_servers_call_script(username=None, debug=False):
+    if username:
+        uid = int(
+            _call_CreateUser_script(username).splitlines()[1].split(":")[1].strip()
+        )
+        running_servers = get_output_of_script_as_user(
+            command=["matlab-proxy-app-list-servers"], uid=uid
+        )
+        print(f"Running servers for user {username}: {running_servers}")
 
 
 def get_url_to_matlab(session_id, context):
@@ -50,6 +195,114 @@ def get_url_to_matlab(session_id, context):
         return url
 
 
+def start_matlab_session(
+    configure_psp=False,
+    toolboxes_to_install=None,
+    username=None,
+):
+    """Start a MATLAB session.
+
+    Args:
+        configure_psp (bool): Whether to configure the MATLAB Proxy Server.
+        toolboxes_to_install (list): List of toolboxes to install.
+        debug (bool): Whether to enable debug mode.
+
+    Returns:
+        str: The ID of the started MATLAB session.
+    """
+    import os
+    import subprocess
+
+    port = _find_next_open_port()
+    my_env = os.environ
+    my_env["MWI_APP_PORT"] = str(port)
+
+    if username is not None:
+        uid = int(
+            _call_CreateUser_script(username).splitlines()[1].split(":")[1].strip()
+        )
+
+        getent_result = subprocess.run(
+            ["getent", "passwd", username], capture_output=True, text=True
+        )
+        my_env["HOME"] = getent_result.stdout.strip().split(":")[5]
+        my_env["USER"] = username
+        print(f"Starting MATLAB session as user: {username} & uid: {uid}")
+        # Run the command as the specified user
+        run_as_user(command=["matlab-proxy-app"], uid=uid, env=my_env)
+    else:
+        print("Starting MATLAB session as root user")
+        # Run the command as the root user
+        print("Starting MATLAB session...")
+
+        start_msg = f"Starting matlab-proxy-app on port {str(port)}"
+        print(start_msg)
+        r = subprocess.Popen(["matlab-proxy-app"], env=my_env, close_fds=True)
+        print("Started matlab-proxy-app")
+
+    return str(port)
+
+
+def stop_matlab_session(username, port, context=None):
+    if context and context.isInJob:
+        print("Running inside a job, aborting...")
+        return
+    if port or username is None:
+        print("No username or port provided, aborting...")
+        return
+
+    server = get_running_matlab_proxy_servers(username=username, only_ports=False)
+    # Get the server URL for the given port
+    if server is None:
+        print(f"No servers found for {username}, aborting...")
+        return
+    server_url = server[str(port)]
+
+    # Find the URL to the session
+    if server_url is None:
+        print("No server found for the given port, aborting...")
+        return
+
+    # Send a DELETE request to the SHUTDOWN_INTEGRATION endpoint
+    # mwi.send_http_request("http://0.0.0.0:3001/matlab/shutdown_integration","DELETE")
+    shutdown_url = server_url + "/shutdown_integration"
+    print(f"Stopping MATLAB session with ID: {port}")
+    print(f"Sending shutdown request to URL: {shutdown_url}")
+
+    send_http_request(shutdown_url, method="DELETE")
+
+    # Send the shutdown request using OS.KILL (Not a good idea, as clean up is not guaranteed.)
+    # import os
+    # import signal
+    # process_info = find_process_using_port(int(port))
+    # if process_info:
+    #     pid, pname = process_info
+    #     if "matlab-proxy" in pname:
+    #         print(f"Stopping MATLAB session with ID: {port}")
+    #         # Terminate the process
+    #         os.kill(pid, signal.SIGTERM)
+    # else:
+    #     print(f"No MATLAB session found with ID: {port}")
+
+
+# def stop_matlab_session_old(session_id):
+#     import os
+#     import signal
+
+#     process_info = find_process_using_port(int(session_id))
+#     if process_info:
+#         pid, pname = process_info
+#         if "matlab-proxy" in pname:
+#             print(f"Stopping MATLAB session with ID: {session_id}")
+#             # Terminate the process
+#             os.kill(pid, signal.SIGTERM)
+#     else:
+#         print(f"No MATLAB session found with ID: {session_id}")
+
+
+################################################
+## Helper Functions
+################################################
 def _dPrint(msg: str):
     import inspect
 
@@ -114,93 +367,6 @@ def _parse_matlab_proxy_servers(server_list, debug=False) -> dict:
     return parsed_servers
 
 
-def get_running_matlab_proxy_servers_call_script(username=None, debug=False):
-    if username:
-        uid = int(
-            _call_CreateUser_script(username).splitlines()[1].split(":")[1].strip()
-        )
-        running_servers = get_output_of_script_as_user(
-            command=["matlab-proxy-app-list-servers"], uid=uid
-        )
-        print(f"Running servers for user {username}: {running_servers}")
-
-
-def get_running_matlab_proxy_servers(username=None, debug=False, only_ports=True):
-    """This function looks at the file system & not the process tree to find the running matlab-proxy servers."""
-    printd = _dPrint if debug else lambda x: None
-
-    import glob
-    import os
-    import sys
-    import socket
-    import subprocess
-
-    if username is not None:
-        hostname = socket.gethostname()
-        getent_result = subprocess.run(
-            ["getent", "passwd", username], capture_output=True, text=True
-        )
-        home_folder = (
-            getent_result.stdout.strip().split(":")[5]
-            + "/.matlab/MWI/hosts/"
-            + hostname
-        )
-        ports_folder = home_folder + "/ports"
-    else:
-        # Add the path to the site_package for matlab-proxy in the container
-        matlab_proxy_install_location = _get_matlab_proxy_install_location(debug=debug)
-        sys.path.append(matlab_proxy_install_location)
-
-        import matlab_proxy.settings as mwi_settings
-
-        # Find the running servers
-        home_folder = mwi_settings.get_mwi_config_folder()
-        ports_folder = home_folder / "ports"
-
-    # Look for files in port folders
-    search_string = str(ports_folder) + "/**/mwi_server.info"
-
-    search_results = sorted(glob.glob(search_string), key=os.path.getmtime)
-    running_servers = []
-    for server in search_results:
-        with open(server) as f:
-            server_info = f.read()
-            printd(str(server_info))
-            running_servers.append(str(server_info).rstrip())
-
-    # return running_servers
-    if running_servers:
-        server_dict = _parse_matlab_proxy_servers(running_servers, debug=debug)
-        return list(server_dict.keys()) if only_ports else server_dict
-    else:
-        return ""
-
-
-def get_toolboxes_available_for_install():
-    return ["Symbolic Math", "Deep Learning", "This FEATURE IS NOT YET IMPLEMENTED"]
-
-
-def get_matlab_root():
-    """Get the root directory of MATLAB.
-
-    Returns:
-        str: The root directory of MATLAB.
-    """
-    # return _call_ListInstalledProducts_script().splitlines()[2].split(":")[1].strip()
-    import subprocess
-
-    result = subprocess.run(["which", "matlab"], capture_output=True, text=True)
-    matlab_path = result.stdout.strip()
-
-    resolved_path = subprocess.run(
-        ["readlink", "-f", matlab_path], capture_output=True, text=True
-    ).stdout.strip()
-    if resolved_path.endswith("/bin/matlab"):
-        resolved_path = resolved_path.replace("/bin/matlab", "")
-
-    return resolved_path
-
-
 def _call_ListInstalledProducts_script():
     import subprocess
     import os
@@ -228,36 +394,6 @@ def _call_ListInstalledProducts_script_cached():
         )
 
     return _call_ListInstalledProducts_script._cached_output
-
-
-def get_matlab_version():
-    """Get the version of MATLAB.
-
-    Returns:
-        str: The version of MATLAB.
-    """
-    return (
-        _call_ListInstalledProducts_script_cached()
-        .splitlines()[2]
-        .split(":")[1]
-        .strip()
-    )
-
-
-def get_installed_toolboxes():
-    """Get the list of installed toolboxes in MATLAB.
-
-    Returns:
-        list: List of installed toolboxes.
-    """
-
-    installed_products = _call_ListInstalledProducts_script_cached()
-    return installed_products.splitlines()[4:]
-
-
-## Instead of sending OS.KILL to terminate integrations.
-# Send a DELETE request to the SHUTDOWN_INTEGRATION endpoint
-# mwi.send_http_request("http://0.0.0.0:3001/matlab/shutdown_integration","DELETE")
 
 
 def send_http_request(url, method="GET", data=None):
@@ -305,63 +441,6 @@ def send_http_request(url, method="GET", data=None):
 #             if conn.laddr.port == port:
 #                 return proc.info["pid"], proc.info["name"]
 #     return None
-
-
-def stop_matlab_session(username, port, context=None):
-    import os
-    import signal
-
-    if context and context.isInJob:
-        print("Running inside a job, aborting...")
-        return
-    if port or username is None:
-        print("No username or port provided, aborting...")
-        return
-
-    server = get_running_matlab_proxy_servers(username=username, only_ports=False)
-    # Get the server URL for the given port
-    if server is None:
-        print(f"No servers found for {username}, aborting...")
-        return
-    server_url = server[str(port)]
-
-    # Find the URL to the session
-    if server_url is None:
-        print("No server found for the given port, aborting...")
-        return
-
-    shutdown_url = server_url + "/shutdown_integration"
-    print(f"Stopping MATLAB session with ID: {port}")
-    print(f"Sending shutdown request to URL: {shutdown_url}")
-
-    send_http_request(shutdown_url, method="DELETE")
-
-    # Send the shutdown request to the URL
-
-    # process_info = find_process_using_port(int(port))
-    # if process_info:
-    #     pid, pname = process_info
-    #     if "matlab-proxy" in pname:
-    #         print(f"Stopping MATLAB session with ID: {port}")
-    #         # Terminate the process
-    #         os.kill(pid, signal.SIGTERM)
-    # else:
-    #     print(f"No MATLAB session found with ID: {port}")
-
-
-# def stop_matlab_session_old(session_id):
-#     import os
-#     import signal
-
-#     process_info = find_process_using_port(int(session_id))
-#     if process_info:
-#         pid, pname = process_info
-#         if "matlab-proxy" in pname:
-#             print(f"Stopping MATLAB session with ID: {session_id}")
-#             # Terminate the process
-#             os.kill(pid, signal.SIGTERM)
-#     else:
-#         print(f"No MATLAB session found with ID: {session_id}")
 
 
 def _call_CreateUser_script(username=None):
@@ -415,54 +494,6 @@ def get_output_of_script_as_user(uid, command=None, env=None):
         print(f"Command error: {output.stderr}")
         print(f"Command return code: {output.returncode}")
     return output.stdout
-
-
-def start_matlab_session(
-    configure_psp=False,
-    toolboxes_to_install=None,
-    username=None,
-):
-    """Start a MATLAB session.
-
-    Args:
-        configure_psp (bool): Whether to configure the MATLAB Proxy Server.
-        toolboxes_to_install (list): List of toolboxes to install.
-        debug (bool): Whether to enable debug mode.
-
-    Returns:
-        str: The ID of the started MATLAB session.
-    """
-    import os
-    import subprocess
-
-    port = _find_next_open_port()
-    my_env = os.environ
-    my_env["MWI_APP_PORT"] = str(port)
-
-    if username is not None:
-        uid = int(
-            _call_CreateUser_script(username).splitlines()[1].split(":")[1].strip()
-        )
-
-        getent_result = subprocess.run(
-            ["getent", "passwd", username], capture_output=True, text=True
-        )
-        my_env["HOME"] = getent_result.stdout.strip().split(":")[5]
-        my_env["USER"] = username
-        print(f"Starting MATLAB session as user: {username} & uid: {uid}")
-        # Run the command as the specified user
-        run_as_user(command=["matlab-proxy-app"], uid=uid, env=my_env)
-    else:
-        print("Starting MATLAB session as root user")
-        # Run the command as the root user
-        print("Starting MATLAB session...")
-
-        start_msg = f"Starting matlab-proxy-app on port {str(port)}"
-        print(start_msg)
-        r = subprocess.Popen(["matlab-proxy-app"], env=my_env, close_fds=True)
-        print("Started matlab-proxy-app")
-
-    return str(port)
 
 
 def _find_next_open_port(

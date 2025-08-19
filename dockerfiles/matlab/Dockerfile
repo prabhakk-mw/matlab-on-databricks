@@ -104,9 +104,9 @@ WORKDIR /root
 
 ENV MATHWORKS_SERVICE_HOST_MANAGED_INSTALL_ROOT=${MSH_MANAGED_INSTALL_ROOT}
 
-####################################
+########################################################################
 # Install matlab-proxy as root user for all users of the container
-####################################
+########################################################################
 ## MATLAB Proxy Configuration
 ENV MWI_USE_COOKIE_CACHE=True
 ENV MWI_APP_PORT=8888
@@ -117,13 +117,13 @@ EXPOSE 8888
 
 RUN ${PYTHON3} -m pip install --no-cache-dir aiohttp==3.10.5 matlab-proxy jupyter-matlab-proxy
 
-###################################
+#######################################################################
 # Install MATLAB Engine for Python
 # Installation can fail if,Python Version is incompatible.
 # For more information, see https://mathworks.com/support/requirements/python-compatibility.html
 #
 # Failure to install does not stop the build
-####################################
+########################################################################
 RUN echo "Installing MATLAB Engine for Python..." && \
     MATLAB_VERSION=$(cat ${MATLAB_INSTALL_LOCATION}/VersionInfo.xml | grep -oP '(\d{2}\.\d{1})') && \
     env LD_LIBRARY_PATH=${MATLAB_INSTALL_LOCATION}/bin/glnxa64 ${PYTHON3} -m pip install --no-cache-dir matlabengine==${MATLAB_VERSION}.* || \
@@ -148,5 +148,7 @@ ENV MLM_LICENSE_FILE=${LICENSE_SERVER}
 ## Final stage that sets the entrypoint and exposes the MATLAB Proxy application.
 #################################################################################################
 FROM base${NLM} AS final
-# Entrypoint is ignored in Databricks, but can be used for local testing.
-ENTRYPOINT ["/bin/sh", "-c", ". /databricks/python3/bin/activate && matlab-proxy-app" ]
+# Entrypoint supposed to be ignored in Databricks and can be used for local testing.
+# ENTRYPOINT ["/bin/sh", "-c", ". /databricks/python3/bin/activate && matlab-proxy-app" ]
+
+## Update 19 Aug 2025: Databricks seems to be running the entrypoint despite their documentation.
