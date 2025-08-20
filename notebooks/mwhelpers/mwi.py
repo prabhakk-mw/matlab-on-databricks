@@ -59,14 +59,14 @@ def get_user_name():
 ## MATLAB Installation Related
 ################################################
 
-def get_installed_toolboxes():
+def get_installed_toolboxes(refresh):
     """Get the list of installed toolboxes in MATLAB.
 
     Returns:
         list: List of installed toolboxes.
     """
 
-    installed_products = _call_ListInstalledProducts_script_cached()
+    installed_products = _call_ListInstalledProducts_script_cached(refresh)
     return installed_products.splitlines()[4:]
 
 
@@ -425,9 +425,9 @@ def _call_ListInstalledProducts_script():
     return script_output
 
 
-def _call_ListInstalledProducts_script_cached():
+def _call_ListInstalledProducts_script_cached(refresh):
     """ Listing all products can be time consuming, so we cache the output."""
-    if not hasattr(_call_ListInstalledProducts_script, "_cached_output"):
+    if not hasattr(_call_ListInstalledProducts_script, "_cached_output") or refresh:
         _call_ListInstalledProducts_script._cached_output = (
             _call_ListInstalledProducts_script()
         )
