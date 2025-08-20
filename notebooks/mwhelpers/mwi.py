@@ -118,8 +118,8 @@ def get_toolboxes_available_for_install():
 
     response = requests.get(url)
     if response.status_code != 200:
-        print("Error: Failed to fetch the file content.")
-        exit(1)
+        return["Error: Failed to fetch the file content."]
+        
 
     file_content = response.text
 
