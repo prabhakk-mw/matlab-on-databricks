@@ -180,6 +180,7 @@ def start_matlab_session(
         # This is a mock implementation.
     if toolboxes_to_install:
         print(f"Installing toolboxes: {toolboxes_to_install}")
+        _call_InstallToolboxes_script(username=None, toolboxes=toolboxes_to_install)
 
     print("Starting MATLAB session...")
     sleep(2)
@@ -195,3 +196,40 @@ def stop_matlab_session(username, port, context=None):
     """
     # This is a mock implementation.
     print(f"Stopping MATLAB session with ID: {port}")
+
+
+def _call_InstallToolboxes_script(username=None, destination=None, toolboxes=None):
+    """Creates a user with the given username."""
+    import subprocess
+    import os
+
+    if username is None:
+        print("Installing as root user")
+
+    if destination is None:
+        destination = get_matlab_root()
+
+    if toolboxes is None:
+        print('No toolboxes to install.')
+        return 0
+    else:
+        print(f"Installing toolboxes: {toolboxes}")
+        # Convert the list of toolboxes to a space separated string, where each toolbox name is _ separated.
+        products = " ".join(product.replace(" ", "_") for product in toolboxes)
+
+    script_path = os.path.join(os.path.dirname(__file__), "scripts", "InstallProducts.sh")
+    result = subprocess.run(
+        [
+            script_path,
+            "--destination",
+            destination,
+            "--release",
+            get_matlab_version().split(" ")[0],
+            "--products",
+            products
+        ],
+        capture_output=True,
+        text=True,
+    )
+    script_output = result.stdout
+    return script_output
