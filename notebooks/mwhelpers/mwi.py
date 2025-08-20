@@ -107,7 +107,7 @@ def get_matlab_version():
 def get_toolboxes_available_for_install():
     import requests
 
-    matlab_version = get_matlab_version()
+    matlab_version = get_matlab_version().split(" ")[0]  # Extract the version part, e.g., "R2025a"
     installed_toolboxes = get_installed_toolboxes()
     # Lowercased MATLAB Version
     # Example: R2023a -> r2023a
@@ -132,13 +132,10 @@ def get_toolboxes_available_for_install():
     for line in file_content.splitlines():
         line = line.strip()
         if line == "## PRODUCTS":
-            print("Found products section")
             current_section = "products"
         elif line == "## SUPPORT PACKAGES":
-            print("Found support packages section")
             current_section = "support_packages"
         elif line == "## OPTIONAL FEATURES":
-            print("Found optional features section")
             current_section = "optional_features"
         elif line.startswith("#product."):
             if current_section == "products":
@@ -250,6 +247,12 @@ def start_matlab_session(
     if username is None:
         print("No username provided, aborting...")
         return ""
+
+    if configure_psp:
+        print("Configuring PSP...")
+        # This is a mock implementation.
+    if toolboxes_to_install:
+        print(f"Installing toolboxes: {toolboxes_to_install}")
 
     home_folder = _get_home_folder(username)
     if not home_folder:

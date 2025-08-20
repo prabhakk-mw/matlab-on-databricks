@@ -74,7 +74,7 @@ def get_matlab_root():
 
 
 def get_matlab_version():
-    return "R2025a"
+    return "R2025a Update 1 (25.1.0.2973910)"
 
 
 def get_toolboxes_available_for_install():
@@ -84,7 +84,7 @@ def get_toolboxes_available_for_install():
     """
     import requests
 
-    matlab_version = get_matlab_version()
+    matlab_version = get_matlab_version().split(" ")[0]  # Extract the version part, e.g., "R2025a"
     installed_toolboxes = get_installed_toolboxes()
     # Lowercased MATLAB Version
     # Example: R2023a -> r2023a
@@ -108,23 +108,17 @@ def get_toolboxes_available_for_install():
     for line in file_content.splitlines():
         line = line.strip()
         if line == "## PRODUCTS":
-            print("Found products section")
             current_section = "products"
         elif line == "## SUPPORT PACKAGES":
-            print("Found support packages section")
             current_section = "support_packages"
         elif line == "## OPTIONAL FEATURES":
-            print("Found optional features section")
             current_section = "optional_features"
         elif line.startswith("#product."):
             if current_section == "products":
-                # print(".")
                 products.append(line.replace("#product.", "").replace("_", " "))
             elif current_section == "support_packages":
-                # print("*")
                 support_packages.append(line.replace("#product.", "").replace("_", " "))
             elif current_section == "optional_features":
-                # print(f"Adding optional feature: {line}")
                 optional_features.append(line.replace("#product.", "").replace("_", " "))
 
 
