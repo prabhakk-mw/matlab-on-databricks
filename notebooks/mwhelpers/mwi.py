@@ -201,7 +201,7 @@ def start_matlab_session(
         home_folder = _get_home_folder(username)
 
     if not home_folder:
-        print("Unable to home folder, aborting...")
+        print("Unable to find the home folder, aborting...")
         return ""
 
     uid = _get_uid(username)
@@ -284,6 +284,8 @@ def _query_system_for_user(username):
     )
     if getent_result.returncode != 0:
         return ""
+    
+    return getent_result
 
 
 def _get_home_folder(username):
