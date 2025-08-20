@@ -91,7 +91,7 @@ def get_toolboxes_available_for_install():
 ################################################
 
 
-def get_running_matlab_proxy_servers(debug=False):
+def get_running_matlab_proxy_servers(username, debug=False, only_ports=True):
     return [str(random.randint(3000, 9999)) for _ in range(3)]
 
 
@@ -109,7 +109,11 @@ def get_url_to_matlab(session_id, context):
     # return f"http://localhost:8000/matlab/{session_id}"
 
 
-def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=False):
+def start_matlab_session(
+    username=None,
+    configure_psp=False,
+    toolboxes_to_install=None,
+):
     """Start a MATLAB session.
 
     Args:
@@ -132,11 +136,11 @@ def start_matlab_session(configure_psp=False, toolboxes_to_install=None, debug=F
     return str(random.randint(1000, 9999))
 
 
-def stop_matlab_session(session_id):
+def stop_matlab_session(username, port, context=None):
     """Stop a MATLAB session.
 
     Args:
-        session_id (str): The ID of the session to stop.
+        port (str): The port number of the session to stop.
     """
     # This is a mock implementation.
-    print(f"Stopping MATLAB session with ID: {session_id}")
+    print(f"Stopping MATLAB session with ID: {port}")
