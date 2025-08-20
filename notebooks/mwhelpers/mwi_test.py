@@ -70,11 +70,11 @@ def get_installed_toolboxes():
 
 
 def get_matlab_root():
-    return "/opt/matlab/R2023a"
+    return "/opt/matlab/R2025a"
 
 
 def get_matlab_version():
-    return "R2023a"
+    return "R2025a"
 
 
 def get_toolboxes_available_for_install():
@@ -82,8 +82,66 @@ def get_toolboxes_available_for_install():
     Returns:
         list: List of toolboxes available for installation.
     """
-    # This is a mock implementation.
-    return ["Symbolic Math", "Deep Learning"]
+    import requests
+
+    matlab_version = get_matlab_version()
+    installed_toolboxes = get_installed_toolboxes()
+    # Lowercased MATLAB Version
+    # Example: R2023a -> r2023a
+    matlab_version_lc = matlab_version[0].lower() + matlab_version[1:]
+
+    # URL of the file to download
+    url = f"https://raw.githubusercontent.com/mathworks-ref-arch/matlab-dockerfile/refs/heads/main/mpm-input-files/{matlab_version}/mpm_input_{matlab_version_lc}.txt"
+
+    response = requests.get(url)
+    if response.status_code != 200:
+        print("Error: Failed to fetch the file content.")
+        exit(1)
+
+    file_content = response.text
+
+    products = []
+    support_packages = []
+    optional_features = []
+
+    current_section = None
+
+    for line in file_content.splitlines():
+        line = line.strip()
+        if line == "## PRODUCTS":
+            print("Found products section")
+            current_section = "products"
+        elif line == "## SUPPORT PACKAGES":
+            print("Found support packages section")
+            current_section = "support_packages"
+        elif line == "## OPTIONAL FEATURES":
+            print("Found optional features section")
+            current_section = "optional_features"
+        elif line.startswith("#product."):
+            if current_section == "products":
+                # print(".")
+                products.append(line.replace("#product.", "").replace("_", " "))
+            elif current_section == "support_packages":
+                # print("*")
+                support_packages.append(line.replace("#product.", "").replace("_", " "))
+            elif current_section == "optional_features":
+                # print(f"Adding optional feature: {line}")
+                optional_features.append(line.replace("#product.", "").replace("_", " "))
+
+
+    # print("Total products found:", len(products))
+    # print("Total support_packages found:", len(support_packages))
+    # print("Total optional_features found:", len(optional_features))
+
+    # Filter out already installed toolboxes
+    toolboxes_available_for_install = [
+        toolbox for toolbox in products if toolbox not in installed_toolboxes]
+    
+    # Print the extracted lines (optional)
+    # print(toolboxes_available_for_install)
+    # print("Total toolboxes available for install:", len(toolboxes_available_for_install))
+    toolboxes_available_for_install.sort()
+    return toolboxes_available_for_install
 
 
 ################################################
