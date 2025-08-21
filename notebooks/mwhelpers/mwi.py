@@ -532,14 +532,7 @@ def run_as_user(uid, command=None, env=None):
     def demote():
         os.setuid(uid)
 
-    process = subprocess.Popen(
-        command, env=env, preexec_fn=demote, capture_output=True, text=True
-    )
-    if process.returncode != 0:
-        print(f"Error running command: {command}")
-        print(f"Error message: {process.stderr}")
-        return None
-
+    process = subprocess.Popen(command, env=env, preexec_fn=demote)
     return process
 
 
