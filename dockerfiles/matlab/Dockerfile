@@ -108,6 +108,7 @@ ENV MATHWORKS_SERVICE_HOST_MANAGED_INSTALL_ROOT=${MSH_MANAGED_INSTALL_ROOT}
 # Install matlab-proxy as root user for all users of the container
 ########################################################################
 ## MATLAB Proxy Configuration
+ENV MW_CONTEXT_TAGS=MATLAB_PROXY:DATABRICKS:V1
 ENV MWI_USE_COOKIE_CACHE=True
 ENV MWI_APP_PORT=8888
 ENV MWI_BASE_URL="/matlab"
@@ -115,11 +116,11 @@ ENV MWI_BASE_URL="/matlab"
 ENV MWI_ENABLE_TOKEN_AUTH=False
 EXPOSE 8888
 
-RUN ${PYTHON3} -m pip install --no-cache-dir aiohttp==3.10.5 matlab-proxy jupyter-matlab-proxy
+RUN ${PYTHON3} -m pip install --no-cache-dir matlab-proxy
 
 #######################################################################
 # Install MATLAB Engine for Python
-# Installation can fail if,Python Version is incompatible.
+# Installation can fail if, Python Version is incompatible.
 # For more information, see https://mathworks.com/support/requirements/python-compatibility.html
 #
 # Failure to install does not stop the build
@@ -128,10 +129,6 @@ RUN echo "Installing MATLAB Engine for Python..." && \
     MATLAB_VERSION=$(cat ${MATLAB_INSTALL_LOCATION}/VersionInfo.xml | grep -oP '(\d{2}\.\d{1})') && \
     env LD_LIBRARY_PATH=${MATLAB_INSTALL_LOCATION}/bin/glnxa64 ${PYTHON3} -m pip install --no-cache-dir matlabengine==${MATLAB_VERSION}.* || \
     echo "Failed to install MATLAB Engine for Python... skipping ..."
-
-# This variable ensures that MATLAB starts in the USERPATH folder if it is present.
-ENV MATLAB_USE_USERWORK=1
-ENV MW_CONTEXT_TAGS=MATLAB_PROXY:DATABRICKS:V1
 
 # Reset PIP settings
 ENV PIP_BREAK_SYSTEM_PACKAGES=
@@ -149,6 +146,6 @@ ENV MLM_LICENSE_FILE=${LICENSE_SERVER}
 #################################################################################################
 FROM base${NLM} AS final
 # Entrypoint supposed to be ignored in Databricks and can be used for local testing.
-# ENTRYPOINT ["/bin/sh", "-c", ". /databricks/python3/bin/activate && matlab-proxy-app" ]
+# ENTRYPOINT ["/bin/sh", "-c", "su ubuntu -c 'cd $HOME && . /databricks/python3/bin/activate && matlab-proxy-app'" ]
 
 ## Update 19 Aug 2025: Databricks seems to be running the entrypoint despite their documentation.
