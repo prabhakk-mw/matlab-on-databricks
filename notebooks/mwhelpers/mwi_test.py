@@ -56,7 +56,7 @@ def get_user_name():
 ################################################
 ## MATLAB Installation Related
 ################################################
-def get_installed_toolboxes():
+def get_installed_toolboxes(refresh=None):
     """Get the list of installed toolboxes in MATLAB.
 
     Returns:
@@ -84,7 +84,9 @@ def get_toolboxes_available_for_install():
     """
     import requests
 
-    matlab_version = get_matlab_version().split(" ")[0]  # Extract the version part, e.g., "R2025a"
+    matlab_version = get_matlab_version().split(" ")[
+        0
+    ]  # Extract the version part, e.g., "R2025a"
     installed_toolboxes = get_installed_toolboxes()
     # Lowercased MATLAB Version
     # Example: R2023a -> r2023a
@@ -95,7 +97,7 @@ def get_toolboxes_available_for_install():
 
     response = requests.get(url)
     if response.status_code != 200:
-        return["Error: Failed to fetch the file content."]
+        return ["Error: Failed to fetch the file content."]
 
     file_content = response.text
 
@@ -119,8 +121,9 @@ def get_toolboxes_available_for_install():
             elif current_section == "support_packages":
                 support_packages.append(line.replace("#product.", "").replace("_", " "))
             elif current_section == "optional_features":
-                optional_features.append(line.replace("#product.", "").replace("_", " "))
-
+                optional_features.append(
+                    line.replace("#product.", "").replace("_", " ")
+                )
 
     # print("Total products found:", len(products))
     # print("Total support_packages found:", len(support_packages))
@@ -128,8 +131,9 @@ def get_toolboxes_available_for_install():
 
     # Filter out already installed toolboxes
     toolboxes_available_for_install = [
-        toolbox for toolbox in products if toolbox not in installed_toolboxes]
-    
+        toolbox for toolbox in products if toolbox not in installed_toolboxes
+    ]
+
     # Print the extracted lines (optional)
     # print(toolboxes_available_for_install)
     # print("Total toolboxes available for install:", len(toolboxes_available_for_install))
@@ -210,14 +214,16 @@ def _call_InstallToolboxes_script(username=None, destination=None, toolboxes=Non
         destination = get_matlab_root()
 
     if toolboxes is None:
-        print('No toolboxes to install.')
+        print("No toolboxes to install.")
         return 0
     else:
         print(f"Installing toolboxes: {toolboxes}")
         # Convert the list of toolboxes to a space separated string, where each toolbox name is _ separated.
         products = " ".join(product.replace(" ", "_") for product in toolboxes)
 
-    script_path = os.path.join(os.path.dirname(__file__), "scripts", "InstallProducts.sh")
+    script_path = os.path.join(
+        os.path.dirname(__file__), "scripts", "InstallProducts.sh"
+    )
     result = subprocess.run(
         [
             script_path,
@@ -226,7 +232,7 @@ def _call_InstallToolboxes_script(username=None, destination=None, toolboxes=Non
             "--release",
             get_matlab_version().split(" ")[0],
             "--products",
-            products
+            products,
         ],
         capture_output=True,
         text=True,
