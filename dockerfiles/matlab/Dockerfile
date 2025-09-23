@@ -36,7 +36,7 @@ ARG UBUNTU_VERSION=24.04
 # Use the python that is recommended by Databricks: https://docs.databricks.com/aws/en/compute/custom-containers#option-1-use-a-base-built-by-databricks
 ARG PYTHON3=/databricks/python3/bin/python3
 # Specify the MATLAB release to install.
-ARG MATLAB_RELEASE=R2025a
+ARG MATLAB_RELEASE=R2025b
 # Specify the list of products(toolboxes) to install into MATLAB.
 ARG MATLAB_PRODUCT_LIST="MATLAB Simulink"
 # Specify MATLAB Install Location.
