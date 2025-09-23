@@ -66,8 +66,6 @@ Having trouble? We'd love to help!
 
 ## License
 
-Copyright 2025 The MathWorks, Inc.
-
 See [`LICENSE.md`](LICENSE.md) for license terms and conditions.
 
 ## Required Products
@@ -82,13 +80,10 @@ Additional toolboxes can be installed as needed through the MATLAB Package Manag
 
 Ready to get started? Head over to our Getting Started Guide to set up your first MATLAB-enabled Databricks cluster, or check out the examples folder for sample notebooks.
 
-Note: This repository is designed for use with MathWorks products. Ensure you have appropriate licenses before use.# matlab-on-databricks
-This repository hosts multiple templates, recipes, scripts, Dockerfiles to enable working with MATLAB in a properly configured Databricks environment.
+Note: This repository is designed for use with MathWorks products. Ensure you have appropriate licenses before use.
 
-## Repo structure
-| Folder Name | Description |
-|--|--|
-| setup | Contains code that is usually utilized by the administrator of a workspace. |
-| dockerfiles | Contains examples of dockerfiles for Container images suitable for use with Databricks. |
-| apps | Contains useful Databricks Apps |
-| guides | Readme guides that explain various workflows with MATLAB |  
+---------------
+
+Copyright 2025 The MathWorks, Inc.
+
+---------------
