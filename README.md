@@ -100,6 +100,8 @@ Refer to the [Push to ACR](./dockerfiles/PushToACR.md#to-pull-your-image-from-da
 
 The container image deployed in the previous steps include the [MATLAB Proxy Application](https://github.com/mathworks/matlab-proxy) which allows interactive browser-based access to MATLAB Desktop. 
 
+To begin using the notebook, ensure that you have connected the notebook to the cluster created in the previous step.
+
 The notebook [MATLAB_Control_Panel.ipynb](./notebooks/MATLAB_Control_Panel.ipynb) provides a widget based interface to call this application and generate links to access the MATLAB Desktop running on the Databricks compute cluster.
 
 ![MATLAB Control Panel](./img/NotebookControlPanel.png)
@@ -108,7 +110,9 @@ Click `Start New MATLAB` followed by `Open MATLAB` buttons to be presented with 
 
 To start MATLAB, login using Online Licensing on the presented screen, or enter the Network License Manager address on this page:
 
-![MATLAB Licensing](https://github.com/mathworks/matlab-proxy/blob/main/img/licensing_GUI.png?raw=true)
+<p align="left">
+    <img src="https://github.com/mathworks/matlab-proxy/blob/main/img/licensing_GUI.png?raw=true" alt="MATLAB Licensing Options" style="width: 50%;">
+</p>
 
 > [!TIP]
 > Depending on your Databricks workspace configuration, it might be possible to import this GitHub repository directly into your workspace. Otherwise, please find a way to get the `notebooks` folder into your  .
