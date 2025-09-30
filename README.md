@@ -17,6 +17,19 @@ This repository contains utilities and resources to run MATLAB&reg; in your Data
 
 - Docker (for building custom containers)
 
+### Databricks Container Configuration
+
+The following settings must be enabled in Databricks to enable container based workflows:
+
+1. Databricks Container Services **must** be enabled. See [Enable Container Services](https://docs.databricks.com/aws/en/compute/custom-containers#enable-container-services)
+2. Set the following values in the Spark Configuration field:
+   - To access Volumes: `spark.databricks.container.volumeMount.enabled true`
+   - To access federated Hive Metastores: `spark.databricks.unityCatalog.hms.federation.enabled true`
+   See [Databricks Container Service Limitations](https://docs.databricks.com/aws/en/compute/custom-containers#limitations), for a full listing.
+
+> [!CAUTION]
+> Databricks Container Services do not support compute on standard access mode.
+
 ## Beta Release (October 2025)
 
 This release focuses on enabling interactive development using the MATLAB Desktop running within a Databricks cluster.
