@@ -8,7 +8,6 @@
 # 2. MATLAB R2025b using MATLAB Package Manager & install dependencies from mathworks-ref-arch/container-images repository
 # 3. Managed Service Host (MSH)
 # 4. MATLAB Proxy as Entrypoint (Entrypoint is ignored in Databricks)
-# 5. Configure MATLAB to start in USERPATH
 
 ### Dockerfile Build Commands:
 
@@ -145,7 +144,6 @@ ENV MLM_LICENSE_FILE=${LICENSE_SERVER}
 ## Final stage that sets the entrypoint and exposes the MATLAB Proxy application.
 #################################################################################################
 FROM base${NLM} AS final
+
 # Entrypoint supposed to be ignored in Databricks and can be used for local testing.
 # ENTRYPOINT ["/bin/sh", "-c", "su ubuntu -c 'cd $HOME && . /databricks/python3/bin/activate && matlab-proxy-app'" ]
-
-## Update 19 Aug 2025: Databricks seems to be running the entrypoint despite their documentation.

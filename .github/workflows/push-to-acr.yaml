@@ -1,12 +1,22 @@
-name: Docker
+# Copyright 2025 The MathWorks, Inc.
+# Build & Publish MATLAB Container for Databricks
+name: matlab-on-databricks
 
+# Define when builds will occur:
 on:
+  # Run workflow when there is a push to the 'main' branch & push includes changes to any files in described path
   push:
-    tags: ["v*.*.*"]
+    branches:
+      - 'main'
+    paths:
+      - 'dockerfiles/matlab/Dockerfile'
+      - '.github/workflows/**'
 
-    # Copy the release strategy from mifj
-    # copy the tagging strategy from JMP
-    # Together you can then also push to GHCR, ACR, 
+  # Run at 00:00 on every Monday (1st Day of the Week) (See: crontab.guru)
+  schedule:
+    - cron: '0 0 * * 1'
+
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: matlab-on-databricks

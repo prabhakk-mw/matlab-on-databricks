@@ -27,7 +27,7 @@ cd matlab-on-databricks
 
 Build container with a name and tag of your choice.
 ```bash
-docker build -t matlab:R2025a .
+docker build -t matlab:R2025a -f dockerfiles/matlab/Dockerfile .
 ```
 
 ## Customize the Image
