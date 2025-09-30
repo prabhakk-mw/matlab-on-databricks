@@ -6,8 +6,6 @@
 ## Dockerfile to build MATLAB Container where:
 # 1. Base image is Databricks Runtime
 # 2. MATLAB R2025b using MATLAB Package Manager & install dependencies from mathworks-ref-arch/container-images repository
-# 3. Managed Service Host (MSH)
-# 4. MATLAB Proxy as Entrypoint (Entrypoint is ignored in Databricks)
 
 ### Dockerfile Build Commands:
 
