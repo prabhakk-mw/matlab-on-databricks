@@ -1,15 +1,16 @@
 # MATLAB on Databricks
 
-Run MATLAB® in your Databricks® environment with this comprehensive toolkit that provides container images, initialization scripts, and utilities for seamless integration. 
-Whether you need interactive MATLAB sessions, batch processing, or parallel computing capabilities, this repository has you covered.
+This repository contains utilities and resources to run MATLAB&reg; in your Databricks&reg; environment.
 
 > [!NOTE] 
-> `MATLAB on Databricks` is under active development. For support or to report issues, see Feedback(#feedback).
+> This repository is under active development.
 
 ## Requirements
 
 - Databricks workspace with cluster creation permissions
-- Network License Manager for MATLAB, or access Online Licensing
+- Licensing
+   - Access to a Network License Manager for MATLAB
+   - or Access to Online Licensing from your Databricks workspace
 - Docker (for building custom containers)
 
 ## Beta Release (October 2025)
@@ -100,7 +101,7 @@ To start MATLAB, login using Online Licensing on the presented screen, or enter 
 ## Feedback
 
 We encourage you to try this repository with your environment and provide feedback. 
-If you encounter a technical issue or have an enhancement request, create an issue [here](https://github.com/mathworks/matlab-proxy/issues)
+If you encounter a technical issue or have an enhancement request, create an issue [here](https://github.com/mathworks-ref-arch/matlab-on-databricks/issues)
 
 
 ---------------
