@@ -1,0 +1,73 @@
+# Copyright 2025 The MathWorks, Inc.
+# Build & Publish MATLAB Container for Databricks
+name: matlab-on-databricks
+
+# Define when builds will occur:
+on:
+  # Run workflow when there is a push to the 'main' branch & push includes changes to any files in described path
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'dockerfiles/matlab/Dockerfile'
+      - '.github/workflows/**'
+
+  # Run at 00:00 on every Monday (1st Day of the Week) (See: crontab.guru)
+  schedule:
+    - cron: '0 0 * * 1'
+
+  workflow_dispatch:
+
+env:
+  # Specify the registry to release to. 
+  # For example to push to Azure Container Registry: <your-acr-name>.azurecr.io
+  REGISTRY: ghcr.io 
+  # Specify the name of the image to be created
+  IMAGE_NAME: ${{ github.repository }} 
+
+jobs:
+  build-and-push-image:
+    name: Build container image
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        matlab_release: [R2023b, R2024a, R2024b, R2025a, R2025b]
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Login to the container registry 
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          # Update the username & password for your registry
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/matlab-on-databricks
+          tags: |
+            type=raw,value=${{ matrix.matlab_release }}
+
+      - name: Build & Push docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: "{{defaultContext}}:dockerfiles/matlab"
+          push: true
+          build-args: |
+            MATLAB_RELEASE=${{ matrix.matlab_release }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+ 
