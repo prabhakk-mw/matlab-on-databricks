@@ -7,10 +7,14 @@ This repository contains utilities and resources to run MATLAB&reg; in your Data
 
 ## Requirements
 
-- Databricks workspace with cluster creation permissions
+- Databricks workspace with 
+   - [Databricks Container Services Enabled](https://docs.databricks.com/aws/en/compute/custom-containers#enable-container-services).
+   - Permissions to create clusters.
+
 - Licensing
    - Access to a Network License Manager for MATLAB
    - or Access to Online Licensing from your Databricks workspace
+
 - Docker (for building custom containers)
 
 ## Beta Release (October 2025)
