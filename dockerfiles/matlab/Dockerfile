@@ -5,7 +5,7 @@
 
 ## Dockerfile to build MATLAB Container where:
 # 1. Base image is Databricks Runtime
-# 2. MATLAB R2025a using MATLAB Package Manager & install dependencies from mathworks-ref-arch/container-images repository
+# 2. MATLAB R2025b using MATLAB Package Manager & install dependencies from mathworks-ref-arch/container-images repository
 # 3. Managed Service Host (MSH)
 # 4. MATLAB Proxy as Entrypoint (Entrypoint is ignored in Databricks)
 # 5. Configure MATLAB to start in USERPATH
@@ -13,18 +13,18 @@
 ### Dockerfile Build Commands:
 
 # By Default the container will be built for Databricks Runtime 16.4-LTS and Ubuntu 24.04.
-# docker build -t matlab-on-databricks:R2025a-16.4  .
+# docker build -t matlab-on-databricks:R2025b-16.4  .
 
 # To build the container for a different Databricks Runtime version or Ubuntu version, you can use the following commands:
 # docker build --build-arg DATABRICKS_IMAGE_TAG=15.4-LTS \
 #              --build-arg UBUNTU_VERSION=22.04 \
-#              -t matlab-on-databricks:R2025a-15.4  .
+#              -t matlab-on-databricks:R2025b-15.4  .
 
 # The other build arguments can be used to specify the MATLAB release, product list, install location, and license server.
-# For example, to build the container with MATLAB R2025a, a specific product list, and a license server, you can use the following command:
-# docker build --build-arg MATLAB_RELEASE=R2025a
+# For example, to build the container with MATLAB R2025b, a specific product list, and a license server, you can use the following command:
+# docker build --build-arg MATLAB_RELEASE=R2025b
 #              --build-arg MATLAB_PRODUCT_LIST="MATLAB Deep_Learning_Toolbox Symbolic_Math_Toolbox"
-#              --build-arg MATLAB_INSTALL_LOCATION="/opt/matlab/R2025a"
+#              --build-arg MATLAB_INSTALL_LOCATION="/opt/matlab/R2025b"
 #              --build-arg LICENSE_SERVER=12345@hostname.com
 #              -t my_matlab_image_name .
 
@@ -66,7 +66,7 @@ ARG MATLAB_DEPENDENCIES="matlab-deps-${MATLAB_RELEASE}-base-dependencies.txt"
 # gettext is required for the administer-mathworks-service-host/admin-scripts/linux/admin-controlled-installation/install.sh script to run
 ARG ADDITIONAL_PACKAGES="wget curl unzip ca-certificates xvfb git vim gettext fluxbox"
 
-# Configure Python 3.12 to allow installing system wide packages. 
+# Configure Python (>3.12) to allow installing system wide packages. 
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 ## Install dependencies

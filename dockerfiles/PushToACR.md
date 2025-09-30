@@ -4,7 +4,7 @@
 
 ```bash
 # Builds the default image from the Dockerfile
-docker build -t matlab.azurecr.io/databricks/matlab:R2025a-16.4 .
+docker build -t matlab.azurecr.io/databricks/matlab:R2025b-16.4 .
 ```
 
 ## Login to ACR
@@ -19,7 +19,7 @@ az acr login --name matlab
 ## Push your Image to ACR
 This step can take a while, time to get some coffee.
 ```bash
-docker push matlab.azurecr.io/databricks/matlab:R2025a-16.4
+docker push matlab.azurecr.io/databricks/matlab:R2025b-16.4
 ```
 
 ## To pull your image from Databricks

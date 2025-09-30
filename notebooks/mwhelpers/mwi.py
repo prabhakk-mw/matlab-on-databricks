@@ -140,29 +140,19 @@ def get_toolboxes_available_for_install():
             current_section = "optional_features"
         elif line.startswith("#product."):
             if current_section == "products":
-                # print(".")
                 products.append(line.replace("#product.", "").replace("_", " "))
             elif current_section == "support_packages":
-                # print("*")
                 support_packages.append(line.replace("#product.", "").replace("_", " "))
             elif current_section == "optional_features":
-                # print(f"Adding optional feature: {line}")
                 optional_features.append(
                     line.replace("#product.", "").replace("_", " ")
                 )
-
-    # print("Total products found:", len(products))
-    # print("Total support_packages found:", len(support_packages))
-    # print("Total optional_features found:", len(optional_features))
 
     # Filter out already installed toolboxes
     toolboxes_available_for_install = [
         toolbox for toolbox in products if toolbox not in installed_toolboxes
     ]
 
-    # Print the extracted lines (optional)
-    # print(toolboxes_available_for_install)
-    # print("Total toolboxes available for install:", len(toolboxes_available_for_install))
     toolboxes_available_for_install.sort()
     return toolboxes_available_for_install
 
@@ -409,6 +399,14 @@ def _parse_matlab_proxy_servers(server_list, debug=False) -> dict:
 def _call_ListInstalledProducts_script():
     """Call the ListInstalledProducts.sh script to get the list of installed products."""
     """This function is used to get the list of installed products in MATLAB, excluding Support Packages."""
+    """ Sample Output:
+        ----------------------
+        MATLAB Root: /opt/matlab/R2025a
+        MATLAB Version: R2025a Update 1 (25.1.0.2973910)
+        ----------------------
+        MATLAB
+        Simulink
+    """
     import subprocess
     import os
 
@@ -574,95 +572,3 @@ def _find_next_open_port(
             return port
 
     return None
-
-
-def _get_matlab_proxy_install_location(debug=False):
-    printd = _dPrint if debug else lambda x: None
-
-    import subprocess
-
-    result = subprocess.run(
-        ["/usr/bin/python3", "-m", "pip", "show", "matlab-proxy"],
-        capture_output=True,
-        text=True,
-    )
-    for line in result.stdout.splitlines():
-        if line.startswith("Location:"):
-            matlab_proxy_install_location = line.split(" ")[1]
-            printd(matlab_proxy_install_location)
-
-            return matlab_proxy_install_location
-    printd("No matlab-proxy install location found")
-    return None
-
-
-def _parse_matlab_proxy_server_ports(server_list, debug=False):
-    printd = _dPrint if debug else lambda x: None
-
-    parsed_servers = []
-    default_server_address = "http://0.0.0.0:"
-    for server in server_list:
-        if server.startswith(default_server_address):
-            server_info = server[len(default_server_address) :]
-            if "/" in server_info:
-                port, base_url = server_info.split("/", 1)
-            else:
-                port, base_url = server_info, ""
-            # parsed_servers.append({"port": port, "base_url": base_url})
-            parsed_servers.append(str(port))
-    printd(parsed_servers)
-
-    return parsed_servers
-
-
-# def find_pid():
-#     import psutil
-#     for process in psutil.process_iter(['pid', 'name']):
-#         try:
-#             connections = process.net_connections()
-#             if connections:
-#                 print(f"Process: {process.info['name']} (PID: {process.info['pid']})")
-#                 for conn in connections:
-#                     print(f"  - {conn}")
-#         except psutil.Error as e:
-#             print(f"Error accessing process {process.info['pid']}: {e}")
-
-# def find_process_using_port(port):
-#     """Find the process using a specific port.
-#     Args:
-#         port (int): The port number to check.
-#     Returns:
-#         tuple: A tuple containing the process ID and name if found, else None.
-#     """
-#     import psutil
-
-#     for proc in psutil.process_iter(["pid", "name", "connections"]):
-#         for conn in proc.info["connections"]:
-#             if conn.laddr.port == port:
-#                 return proc.info["pid"], proc.info["name"]
-#     return None
-
-# def stop_matlab_session_old(session_id):
-#     import os
-#     import signal
-
-#     process_info = find_process_using_port(int(session_id))
-#     if process_info:
-#         pid, pname = process_info
-#         if "matlab-proxy" in pname:
-#             print(f"Stopping MATLAB session with ID: {session_id}")
-#             # Terminate the process
-#             os.kill(pid, signal.SIGTERM)
-#     else:
-#         print(f"No MATLAB session found with ID: {session_id}")
-
-
-# def get_running_matlab_proxy_servers_call_script(username=None, debug=False):
-#     if username:
-#         uid = int(
-#             _call_CreateUser_script(username).splitlines()[1].split(":")[1].strip()
-#         )
-#         running_servers = get_output_of_script_as_user(
-#             command=["matlab-proxy-app-list-servers"], uid=uid
-#         )
-#         print(f"Running servers for user {username}: {running_servers}")
