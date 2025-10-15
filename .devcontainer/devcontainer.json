@@ -1,0 +1,12 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "containerEnv":{
+    "PRABHAKAR":"80085",
+    "PCPATH":"${containerEnv:PATH}:/some/other/path",
+    "PCPATH2":"${PATH}:/some/other/path"
+  },
+  "remoteEnv":{
+    "PRPATH":"${containerEnv:PATH}:/some/other/path:${containerEnv:PRABHAKAR}"
+  },
+  "features": {}
+}
