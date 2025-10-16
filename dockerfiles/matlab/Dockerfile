@@ -41,7 +41,6 @@ ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
 
 # Specify license server information using the format: port@hostname
 ARG LICENSE_SERVER
-ARG NLM=${LICENSE_SERVER:+"-with-nlm"}
 
 #################################################################################################
 ## Build stage that installs MATLAB and its dependencies.
@@ -53,6 +52,7 @@ ARG PYTHON3
 ARG MATLAB_RELEASE
 ARG MATLAB_INSTALL_LOCATION
 ARG MATLAB_PRODUCT_LIST
+ARG LICENSE_SERVER
 
 USER root
 
@@ -130,18 +130,8 @@ RUN echo "Installing MATLAB Engine for Python..." && \
 # Reset PIP settings
 ENV PIP_BREAK_SYSTEM_PACKAGES=
 
-#################################################################################################
-## Build stage that sets the LICENSE_SERVER information only if provided at build time.
-#################################################################################################
-FROM base AS base-with-nlm
-ARG LICENSE_SERVER
-RUN echo "Setting MLM_LICENSE_FILE to ${LICENSE_SERVER}"
+# Configure license server
 ENV MLM_LICENSE_FILE=${LICENSE_SERVER}
-
-#################################################################################################
-## Final stage that sets the entrypoint and exposes the MATLAB Proxy application.
-#################################################################################################
-FROM base${NLM} AS final
 
 # Entrypoint supposed to be ignored in Databricks and can be used for local testing.
 # ENTRYPOINT ["/bin/sh", "-c", "su ubuntu -c 'cd $HOME && . /databricks/python3/bin/activate && matlab-proxy-app'" ]
